@@ -4,6 +4,12 @@
 #ifdef SDL_PATHS
 #include <unistd.h>
 #endif
+#ifdef __SWITCH__
+#include <switch/rstick_to_mouse.h>
+#include <switch/touch_to_mouse.h>
+#include <switch/keymap.h>
+static struct Switch_Key_Map * keymap;
+#endif
 
 #include <SDL.h>
 #include <SDL_image.h>
@@ -33,6 +39,8 @@ static size_t nremaps = 0;
 static boolean showGraphics = false;
 
 static rogueEvent lastEvent;
+
+static boolean _modifierHeld(int mod);
 
 
 static void sdlfatal() {
@@ -168,6 +176,11 @@ static boolean eventFromKey(rogueEvent *event, SDL_Keycode key) {
     Only process keypad events when we're holding a modifier, as there is no
     TextInputEvent then.
     */
+
+    printf("modifier held: %d\n", _modifierHeld(0));
+    SDL_Keymod km = SDL_GetModState();
+    printf("%d - %d - %d - %d -%d\n", km, KMOD_LSHIFT, KMOD_RSHIFT, (KMOD_LSHIFT | KMOD_RSHIFT), (km & ( (KMOD_LSHIFT | KMOD_RSHIFT))));
+    printf("shift=%d ctrl=%d\n", event->shiftKey, event->controlKey);
     if (event->shiftKey || event->controlKey) {
         switch (key) {
             case SDLK_KP_0:
@@ -242,15 +255,35 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
     getWindowPadding(&padx, &pady);
 
     returnEvent->eventType = EVENT_ERROR;
-    returnEvent->shiftKey = _modifierHeld(0);
-    returnEvent->controlKey = _modifierHeld(1);
 
     SDL_Event event;
     boolean ret = false;
 
+#ifdef __SWITCH__
+    int winw, winh;
+    SDL_GetWindowSize(Win, &winw, &winh);
+#endif
+
 
     // ~ for (int i=0; i < 100 && SDL_PollEvent(&event); i++) {
     while (SDL_PollEvent(&event)) {
+        returnEvent->shiftKey = _modifierHeld(0);
+        returnEvent->controlKey = _modifierHeld(1);
+        if (switch_touch_to_mouse(winw, winh, &event))
+	{
+          continue;
+	}
+	else if (switch_rstick_to_mouse(&event))
+	{
+          continue;
+	}
+	else if (keymap)
+	{
+	  if (switch_keymap_event(keymap, &event))
+	  {
+	    continue;
+	  }
+	}
         if (event.type == SDL_QUIT) {
             rogue.gameHasEnded = true; // causes the game loop to terminate quickly
             rogue.nextGame = NG_QUIT; // causes the menu to drop out immediately
@@ -344,6 +377,20 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
 
 
 static void _gameLoop() {
+#ifdef __SWITCH__
+    keymap = switch_keymap_create();
+    if (switch_keymap_load_from_file(keymap, "sdmc:/switch/brogue/switch_keys") < 0)
+    {
+      printf("Failed to open sdmc:/switch/brogue/switch_keys\n");
+      printf("Falling back to romfs:/switch_keys\n");
+      if (switch_keymap_load_from_file(keymap, "romfs:/switch_keys") < 0)
+      {
+        printf("romfs failed...\n");
+	switch_keymap_destroy(keymap);
+	keymap = NULL;
+      }
+    }
+#endif
 #ifdef SDL_PATHS
     char *path = SDL_GetBasePath();
     if (path) {
@@ -363,7 +410,21 @@ static void _gameLoop() {
     free(path);
 #endif
 
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) sdlfatal();
+    int flags = SDL_INIT_VIDEO;
+#ifdef __SWITCH__
+    flags |= SDL_INIT_GAMECONTROLLER;
+#endif
+    if (SDL_Init(flags) < 0) sdlfatal();
+
+#ifdef __SWITCH__
+    for (int i = 0; i < SDL_NumJoysticks(); ++i) {
+      if (SDL_IsGameController(i))
+      {
+	SDL_GameControllerOpen(i);
+      }
+    }
+    SDL_ShowCursor(SDL_ENABLE);
+#endif
 
     if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) imgfatal();
 
@@ -382,6 +443,9 @@ static void _gameLoop() {
 
     SDL_DestroyWindow(Win);
     SDL_Quit();
+#ifdef __SWITCH__
+    switch_keymap_destroy(keymap);
+#endif
 }
 
 

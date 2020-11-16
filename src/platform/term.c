@@ -1,3 +1,4 @@
+#ifdef BROGUE_CURSES
 #include <ncurses.h>
 #include "term.h"
 #include <math.h>
@@ -835,3 +836,4 @@ struct term_t Term = {
     term_keycodeByName,
     {KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_BACKSPACE, KEY_DC, KEY_F(12)}
 };
+#endif

@@ -1,3 +1,4 @@
+#ifdef BROGUE_WEB
 #define _POSIX_C_SOURCE 199309L
 
 #include <stdio.h>
@@ -331,3 +332,4 @@ struct brogueConsole webConsole = {
     NULL,
     NULL
 };
+#endif

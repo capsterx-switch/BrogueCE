@@ -8,3 +8,10 @@ bin/brogue*
 *.gcno
 *.gcov
 gmon.out
+*.elf
+*.nacp
+*.nro
+*.nso
+*.pfs0
+build/
+*.swp

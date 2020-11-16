@@ -1,4 +1,7 @@
 #include "platform.h"
+#ifdef __SWITCH__
+#include <switch/init.h>
+#endif
 
 // Expanding a macro as a string constant requires two levels of macros
 #define _str(x)  #x
@@ -62,6 +65,9 @@ boolean tryParseUint64(char *str, uint64_t *num) {
 
 int main(int argc, char *argv[])
 {
+#ifdef __SWITCH__
+  switch_init();
+#endif
 
 #if 0
 #define TOD(x)  ((double) (x) / FP_FACTOR)
@@ -248,6 +254,9 @@ int main(int argc, char *argv[])
     loadKeymap();
     currentConsole.gameLoop();
 
+#ifdef __SWITCH__
+  switch_deinit();
+#endif
     return 0;
 }
 
