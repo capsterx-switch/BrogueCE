@@ -38,7 +38,7 @@ EXEFS_SRC	:=	exefs_src
 
 APP_TITLE := BrogueCE
 APP_AUTHOR := BrogueCE
-APP_VERSION := 0.1
+APP_VERSION := v1.9.2-r1
 ROMFS=bin
 #ICON		:=	icon.jpg
 
