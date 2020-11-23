@@ -38,9 +38,9 @@ EXEFS_SRC	:=	exefs_src
 
 APP_TITLE := BrogueCE
 APP_AUTHOR := BrogueCE
-APP_VERSION := v1.9.2-r1
+APP_VERSION := v1.9.2-r2
 ROMFS=bin
-#ICON		:=	icon.jpg
+ICON		:=	icon.jpg
 
 ARCH	:=	-march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIE #-ftls-model=local-exec
 CFLAGS	:=	-g -Wall -O2 -ffunction-sections  \
